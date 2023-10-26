@@ -1,3 +1,3 @@
-mod read;
-mod lexer;
-mod parse;
+pub mod read;
+pub mod lexer;
+pub mod parse;

@@ -1,4 +1,4 @@
-use std::{io};
+use std::{io, ops};
 
 /// A Trait for managing and analyzing a sequence (array/slice) of data one item at a time
 /// # Type Parameters
@@ -118,4 +118,12 @@ pub trait Analyser<T: Sized + PartialEq + Copy> {
         return Ok(current)
     }
 
+}
+
+impl<T: Sized + PartialEq + Copy> ops::Index<ops::Range<usize>> for dyn Analyser<T> {
+    type Output = [T];
+
+    fn index(&self, range: ops::Range<usize>) -> &[T] {
+        &self.contents()[range]
+    }
 }

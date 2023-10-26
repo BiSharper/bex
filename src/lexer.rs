@@ -33,8 +33,9 @@ pub trait Token<T: Sized + PartialEq + Copy> where Self: Sized {
 }
 
 /// Defines methods for generating a token using a specific lexical scope (can be used for lexer-hacks).
-pub trait ScopedToken<T: Sized + PartialEq + Copy>: Token<T> where Self: Sized {
+pub trait ScopedToken<T: Sized + PartialEq + Copy> where Self: Sized {
     type Scope: Default;
+    type Error: From<io::Error> + Debug;
 
     /// Generates the next token from Lexer using the defined Scope.
     ///
@@ -46,7 +47,7 @@ pub trait ScopedToken<T: Sized + PartialEq + Copy>: Token<T> where Self: Sized {
 }
 
 impl<T: Sized + PartialEq + Copy, Scoped: ScopedToken<T>> Token<T> for Scoped {
-    type Error = Scoped::Error;
+    type Error = <Scoped as ScopedToken<T>>::Error;
 
     /// Generates the next token in the default scope.
     ///
