@@ -6,13 +6,22 @@ use crate::read::Analyser;
 ///
 /// # Type Parameters
 /// * `T` - Any type that is Sized (has a constant size in memory), and can be compared for equality.
-pub struct Lexer<T: Sized + PartialEq> {
+pub struct Lexer<T: Sized + PartialEq + Copy> {
     cursor:      usize,
     contents:    Vec<T>
 }
 
+impl<T: Sized + PartialEq + Copy> Lexer<T> {
+    pub fn new<C: AsRef<[T]>>(content: C) -> Self {
+        Self {
+            cursor: 0,
+            contents: content.as_ref().to_vec(),
+        }
+    }
+}
+
 /// Defines methods for generating a token.
-pub trait Token<T: Sized + PartialEq> where Self: Sized {
+pub trait Token<T: Sized + PartialEq + Copy> where Self: Sized {
     type Error: From<io::Error> + Debug;
 
     /// Generates the next token from Lexer.
@@ -24,7 +33,7 @@ pub trait Token<T: Sized + PartialEq> where Self: Sized {
 }
 
 /// Defines methods for generating a token using a specific lexical scope (can be used for lexer-hacks).
-pub trait ScopedToken<T: Sized + PartialEq>: Token<T> where Self: Sized {
+pub trait ScopedToken<T: Sized + PartialEq + Copy>: Token<T> where Self: Sized {
     type Scope: Default;
 
     /// Generates the next token from Lexer using the defined Scope.
@@ -36,7 +45,7 @@ pub trait ScopedToken<T: Sized + PartialEq>: Token<T> where Self: Sized {
     fn next_token(lexer: &mut Lexer<T>, scope: &Self::Scope) -> Result<Self, Self::Error>;
 }
 
-impl<T: Sized + PartialEq, Scoped: ScopedToken<T>> Token<T> for Scoped {
+impl<T: Sized + PartialEq + Copy, Scoped: ScopedToken<T>> Token<T> for Scoped {
     type Error = Scoped::Error;
 
     /// Generates the next token in the default scope.

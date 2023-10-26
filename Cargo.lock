@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "BexRs"
+name = "bex"
 version = "0.1.0"

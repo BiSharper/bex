@@ -6,7 +6,7 @@ use crate::lexer::Lexer;
 ///
 /// # Type Parameters
 /// * `T` - Any type that is Sized (has a constant size in memory), and can be compared for equality.
-pub trait Parse<T: Sized + PartialEq>: Sized {
+pub trait Parse<T: Sized + PartialEq + Copy>: Sized {
     type E: From<io::Error> + Debug;
 
     /// Parses the given file using the given lexer and returns the parser.
@@ -30,7 +30,7 @@ pub trait Parse<T: Sized + PartialEq>: Sized {
 ///
 /// # Type Parameters
 /// * `T` - Any type that is Sized (has a constant size in memory), and can be compared for equality.
-pub trait PreProcess<T: Sized + PartialEq>: Parse<T> {
+pub trait PreProcess<T: Sized + PartialEq + Copy>: Parse<T> {
     /// Does preprocessing on the given lexer
     ///
     /// # Arguments
