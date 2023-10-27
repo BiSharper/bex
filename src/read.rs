@@ -108,6 +108,21 @@ pub trait Analyser<T: Sized + PartialEq + Copy> {
             )
     }
 
+    fn get_until(&mut self, target: T) -> io::Result<&[T]> {
+        let start = self.pos();
+        self.seek_until(target)?;
+        Ok(self.contents()[start..self.pos()])
+    }
+
+    fn seek_until(&mut self, target: T) -> io::Result<()> {
+        Ok(loop {
+            let current = self.peek()?;
+            if *current == target {
+                break;
+            }
+        })
+    }
+
     fn get_not(&mut self, target: T) -> io::Result<T> {
         loop {
             let mut found = *self.get()?;
