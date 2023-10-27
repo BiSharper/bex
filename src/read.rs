@@ -108,6 +108,26 @@ pub trait Analyser<T: Sized + PartialEq + Copy> {
             )
     }
 
+    fn get_not(&mut self, target: T) -> io::Result<T> {
+        loop {
+            let mut found = *self.get()?;
+            if found == target { continue }
+            return found;
+        }
+    }
+
+    fn peek_not(&mut self, target: T) -> io::Result<T> {
+
+        loop {
+            let mut found: T = *self.peek()?;
+            if found == target {
+                self.step_forward()?;
+                continue
+            }
+            return found;
+        }
+    }
+
     /// Gets the current element and then moves the cursor forward by one position.
     ///
     /// # Returns
