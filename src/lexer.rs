@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::fmt::Debug;
 use std::io;
 use crate::read::Analyser;
@@ -43,7 +44,7 @@ pub trait ScopedToken<T: Sized + PartialEq + Copy> where Self: Sized {
     ///
     /// * `lexer` - Lexer from which the token should be generated.
     /// * `scope` - the scope for generating the token.
-    fn next_token(lexer: &mut Lexer<T>, scope: &Self::Scope) -> Result<Self, Self::Error>;
+    fn next_token(lexer: &mut Lexer<T>, scope: &mut Self::Scope) -> Result<Self, Self::Error>;
 }
 
 impl<T: Sized + PartialEq + Copy, Scoped: ScopedToken<T>> Token<T> for Scoped {
@@ -55,7 +56,19 @@ impl<T: Sized + PartialEq + Copy, Scoped: ScopedToken<T>> Token<T> for Scoped {
     ///
     /// * `lexer` - Lexer from which the token should be generated.
     fn next_token(lexer: &mut Lexer<T>) -> Result<Self, Self::Error> {
-        <Scoped as ScopedToken<T>>::next_token(lexer, &Scoped::Scope::default())
+        <Scoped as ScopedToken<T>>::next_token(lexer, &mut Scoped::Scope::default())
+    }
+}
+
+impl<T: Sized + PartialEq + Copy> Lexer<T> {
+    pub fn tokenize_until_end<
+        TokenType: Token<T>
+    >(mut self) -> Result<Vec<TokenType>, TokenType::Error> {
+        let mut tokens = vec![];
+        while !self.is_end() {
+            tokens.push(TokenType::next_token(&mut self)?)
+        }
+        Ok(tokens)
     }
 }
 
@@ -70,7 +83,7 @@ impl<T: Sized + PartialEq + Copy> Analyser<T> for Lexer<T> {
     ///
     /// # Returns
     /// Cursor position as usize
-    fn pos(&self) -> &usize { &self.cursor }
+    fn pos(&self) -> usize { self.cursor }
 
     /// Consumes the analyser, returning the sequence being analyzed
     ///

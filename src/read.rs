@@ -14,7 +14,7 @@ pub trait Analyser<T: Sized + PartialEq + Copy> {
     ///
     /// # Returns
     /// Cursor position as usize
-    fn pos(&self) -> &usize;
+    fn pos(&self) -> usize;
 
     /// Consumes the analyser, returning the sequence being analyzed
     ///
@@ -53,7 +53,7 @@ pub trait Analyser<T: Sized + PartialEq + Copy> {
     ///
     /// # Returns
     /// Boolean that's true if end of sequence has been reached
-    fn is_end(&self) -> bool { self.pos() >= &self.len() }
+    fn is_end(&self) -> bool { self.pos() >= self.len() }
 
     /// Resets the cursor to first position (at index 0)
     ///
@@ -99,7 +99,7 @@ pub trait Analyser<T: Sized + PartialEq + Copy> {
     /// `std::io::Result<&T>` - Ok with a reference to the current element in the sequence, otherwise an Err with the `std::io::Error` if the cursor is beyond the sequence bounds ('end of file' condition).
     fn peek(&self) -> io::Result<&T> {
         self.contents()
-            .get(*self.pos())
+            .get(self.pos())
             .ok_or(
                 io::Error::new(
                     io::ErrorKind::UnexpectedEof,
@@ -108,10 +108,10 @@ pub trait Analyser<T: Sized + PartialEq + Copy> {
             )
     }
 
-    fn get_until(&mut self, target: T) -> io::Result<&[T]> {
+    fn get_until(&mut self, target: T) -> io::Result<Vec<T>> {
         let start = self.pos();
         self.seek_until(target)?;
-        Ok(self.contents()[start..self.pos()])
+        Ok(self.contents()[start..self.pos()].to_owned())
     }
 
     fn seek_until(&mut self, target: T) -> io::Result<()> {
@@ -125,9 +125,9 @@ pub trait Analyser<T: Sized + PartialEq + Copy> {
 
     fn get_not(&mut self, target: T) -> io::Result<T> {
         loop {
-            let mut found = *self.get()?;
+            let mut found = self.get()?;
             if found == target { continue }
-            return found;
+            return Ok(found);
         }
     }
 
@@ -139,7 +139,7 @@ pub trait Analyser<T: Sized + PartialEq + Copy> {
                 self.step_forward()?;
                 continue
             }
-            return found;
+            return Ok(found);
         }
     }
 
