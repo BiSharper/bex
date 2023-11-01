@@ -115,7 +115,8 @@ pub trait Analyser<T: Sized + PartialEq + Copy> {
     }
 
     fn get_until(&mut self, target: T) -> io::Result<Vec<T>> {
-        Ok(self.contents()[self.get_until_as_range(target)].to_owned())
+        let range = self.get_until_as_range(target)?;
+        Ok(self.contents()[range].to_owned())
     }
 
     fn space_until(&mut self, target: T) -> io::Result<usize> {
