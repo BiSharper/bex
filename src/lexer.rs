@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::fmt::Debug;
-use std::io;
+use std::{io, ops};
 use crate::read::Analyser;
 
 /// Lexer struct which contains current cursor position and contents to analyze
@@ -18,6 +18,23 @@ impl<T: Sized + PartialEq + Copy> Lexer<T> {
             cursor: 0,
             contents: content.as_ref().to_vec(),
         }
+    }
+
+    pub fn extract(
+        &mut self,
+        range: ops::Range<usize>
+    ) -> Vec<T> {
+        let start = range.start;
+        let end = range.end;
+        let extraction_result = self.contents.drain(range).collect::<Vec<T>>();
+
+        if start <= self.cursor && self.cursor < end {
+            self.cursor = start;
+        } else if end < self.cursor {
+            self.cursor -= end;
+        }
+
+        extraction_result
     }
 }
 

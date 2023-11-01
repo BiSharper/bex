@@ -108,10 +108,20 @@ pub trait Analyser<T: Sized + PartialEq + Copy> {
             )
     }
 
-    fn get_until(&mut self, target: T) -> io::Result<Vec<T>> {
+    fn get_until_as_range(&mut self, target: T) -> io::Result<ops::Range<usize>> {
         let start = self.pos();
         self.seek_until(target)?;
-        Ok(self.contents()[start..self.pos()].to_owned())
+        Ok(start..self.pos())
+    }
+
+    fn get_until(&mut self, target: T) -> io::Result<Vec<T>> {
+        Ok(self.contents()[self.get_until_as_range(target)].to_owned())
+    }
+
+    fn space_until(&mut self, target: T) -> io::Result<usize> {
+        let start = self.pos();
+        self.seek_until(target)?;
+        return Ok(self.pos() - start);
     }
 
     fn seek_until(&mut self, target: T) -> io::Result<()> {
@@ -127,18 +137,6 @@ pub trait Analyser<T: Sized + PartialEq + Copy> {
         loop {
             let mut found = self.get()?;
             if found == target { continue }
-            return Ok(found);
-        }
-    }
-
-    fn peek_not(&mut self, target: T) -> io::Result<T> {
-
-        loop {
-            let mut found: T = *self.peek()?;
-            if found == target {
-                self.step_forward()?;
-                continue
-            }
             return Ok(found);
         }
     }

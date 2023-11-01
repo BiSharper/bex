@@ -13,5 +13,5 @@ pub trait PreProcess<T: Sized + PartialEq + Copy> {
     /// # Arguments
     ///
     /// * `lexer` - The lexer whose content is to be preprocessed
-    fn preprocess(&mut self, lexer: Lexer<T>) -> Result<Lexer<T>, Self::E>;
+    fn preprocess(&mut self, lexer: Lexer<T>) -> Result<Vec<T>, Self::E>;
 }
