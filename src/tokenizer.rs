@@ -1,21 +1,46 @@
+use std::fmt::Debug;
+use std::io;
 use std::io::{Read, Seek};
-use crate::Bexer;
+use crate::{Bexer, LexicalScope};
 
-trait Tokenizer : Sized + PartialEq + Clone {
-    type LexicalError;
+pub trait Token: Sized + PartialEq + Clone {
 
-    fn lexeme<R: Read + Seek>(lexer: &Bexer<R>) -> Result<Self, Self::LexicalError>;
+    fn is_eof(&self) -> bool;
 }
 
-trait ScopedTokenizer: Tokenizer {
-    type LexicalScope: Default;
-    fn scoped_lexeme<R: Read + Seek>(lexer: &Bexer<R>, scope: &Self::LexicalScope) -> Result<Self, Self::LexicalError>;
-}
+pub trait ScopedTokenizer: Token {
+    type Error: From<io::Error> + Debug;
+    type Scope: LexicalScope;
+    fn lex<R: Read + Seek>(
+        lexer: &Bexer<R>,
+        scope: &mut Self::Scope
+    ) -> Self {
+        Self::try_lex(lexer, scope).unwrap()
+    }
+    fn try_lex<R: Read + Seek>(
+        lexer: &Bexer<R>,
+        scope: &mut Self::Scope
+    ) -> Result<Self, Self::Error>;
 
-impl<ST: ScopedTokenizer> Tokenizer for ST {
-    type LexicalError = Self::LexicalError;
+    fn try_tokenize_fully<R: Read + Seek>(
+        lexer: Bexer<R>,
+        scope: &mut Self::Scope
+    ) -> Result<Vec<Self>, Self::Error> {
+        let mut tokens = vec![];
 
-    fn lexeme<R: Read + Seek>(lexer: &Bexer<R>) -> Result<Self, Self::LexicalError> {
-        Self::scoped_lexeme(lexer, &Default::default())
+        loop {
+            let token = Self::try_lex(&lexer, scope)?;
+            if token.is_eof() { break; }
+            tokens.push(token)
+        }
+
+        Ok(tokens)
+    }
+
+    fn tokenize_fully<R: Read + Seek>(
+        lexer: Bexer<R>,
+        scope: &mut Self::Scope
+    ) -> Vec<Self> {
+        Self::try_tokenize_fully(lexer, scope).unwrap()
     }
 }
