@@ -8,24 +8,27 @@ pub trait Token: Sized + PartialEq + Clone {
     fn is_eof(&self) -> bool;
 }
 
-pub trait ScopedTokenizer: Token {
+pub trait Tokenizer {
     type Error: From<io::Error> + Debug;
     type Scope: LexicalScope;
+    type Token: Token;
+
     fn lex<R: Read + Seek>(
         lexer: &Bexer<R>,
         scope: &mut Self::Scope
-    ) -> Self {
+    ) -> Self::Token {
         Self::try_lex(lexer, scope).unwrap()
     }
+
     fn try_lex<R: Read + Seek>(
         lexer: &Bexer<R>,
         scope: &mut Self::Scope
-    ) -> Result<Self, Self::Error>;
+    ) -> Result<Self::Token, Self::Error>;
 
-    fn try_tokenize_fully<R: Read + Seek>(
+    fn try_tokenize_fully<R: Read + Seek> (
         lexer: Bexer<R>,
         scope: &mut Self::Scope
-    ) -> Result<Vec<Self>, Self::Error> {
+    ) -> Result<Vec<Self::Token>, Self::Error> {
         let mut tokens = vec![];
 
         loop {
@@ -37,10 +40,10 @@ pub trait ScopedTokenizer: Token {
         Ok(tokens)
     }
 
-    fn tokenize_fully<R: Read + Seek>(
+    fn tokenize_fully<R: Read + Seek> (
         lexer: Bexer<R>,
         scope: &mut Self::Scope
-    ) -> Vec<Self> {
+    ) -> Vec<Self::Token> {
         Self::try_tokenize_fully(lexer, scope).unwrap()
     }
 }

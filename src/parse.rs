@@ -1,9 +1,9 @@
 use std::fmt::Debug;
 use std::io;
 use std::io::{Read, Seek};
-use crate::{Bexer, LexicalScope};
+use crate::{Bexer, Tokenizer};
 
-pub trait Parse<S: LexicalScope>: Sized {
+pub trait Parse: Sized {
     type ParseError: From<io::Error> + Debug;
 
     fn try_parse<R: Read + Seek>(filename: &str, lexer: Bexer<R>) -> Result<Self, Self::ParseError>;
@@ -12,4 +12,3 @@ pub trait Parse<S: LexicalScope>: Sized {
         Self::try_parse(filename, lexer).unwrap()
     }
 }
-
