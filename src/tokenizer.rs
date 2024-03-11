@@ -4,7 +4,7 @@ use std::io::{Read, Seek};
 use crate::{Bexer, LexicalScope};
 
 pub trait Token: Sized + PartialEq + Clone {
-    fn text(&self) -> &str;
+    fn length(&self) -> usize;
 
     fn position(&self) -> usize;
 
@@ -16,13 +16,13 @@ pub trait Tokenizer {
     type Token: Token;
 
     fn lex<R: Read + Seek>(
-        lexer: &Bexer<R>
+        lexer: &mut Bexer<R>
     ) -> Self::Token {
         Self::try_lex(lexer).unwrap()
     }
 
     fn try_lex<R: Read + Seek>(
-        lexer: &Bexer<R>
+        lexer: &mut Bexer<R>
     ) -> Result<Self::Token, Self::Error>;
 
 }
