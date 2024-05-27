@@ -1,11 +1,19 @@
 use std::borrow::Borrow;
 use std::hash::Hash;
-use std::ops::{Add, Range};
+use std::ops::{Add, Range, Sub};
 use crate::{BErrorScoped, source::{BSliceError}};
 use crate::source::BStringError;
 
 pub trait BSourceMeta: BErrorScoped {
-    type Offset: Copy + Hash + Ord + Into<usize> + Add<Self::Offset, Output = Self::Offset>;
+    type Offset:
+        Copy + Hash + Ord +
+        Into<usize> +
+        Sub<Self::Offset, Output = Self::Offset> +
+        Add<Self::Offset, Output = Self::Offset>;
+}
+
+pub trait BSeekableSource: BSourceMeta {
+    fn b_jump_to(&mut self, offset: Self::Offset) -> Result<(), Self::Error>;
 }
 
 pub trait BKnownEndSource: BSourceMeta {
@@ -16,7 +24,7 @@ pub trait BKnownStartSource: BSourceMeta {
     fn b_start(&self) -> Self::Offset;
 
     //some sources like a buffered source for ex might want to use start for something like the
-    //start of the current buffer so we leave this overflow in said case to be overridden
+    //start of the current buffer, so we leave this overflow in said case to be overridden
     fn b_actual_start(&self) -> Self::Offset { self.b_start() }
 }
 
@@ -38,6 +46,6 @@ pub trait BStrSource<E: From<BStringError>>:
 pub trait BOwnedStrSource<'a, E: From<BStringError> + From<BSliceError>>:
     BStrSource<E> +
     BSliceableSource<&'a str, E> +
-    BSliceableSource<&'a [u8], E>{
+    BSliceableSource<&'a [u8], E> {
 }
 

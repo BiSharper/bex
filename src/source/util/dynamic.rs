@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
-use std::ops::{Deref, DerefMut};
+use std::ops::{Deref, DerefMut, Range};
 use crate::BErrorScoped;
-use crate::source::{BDynamicSource, BStaticSource};
+use crate::source::{BDynamicSource, BDynamicSourceBase, BKnownEndSource, BSeekableSource, BSliceableSource, BSliceError, BStaticSource};
 use crate::source::base::{BKnownStartSource, BSourceBase, BSourceMeta};
 
 pub struct BIntoDynamic<T, S: BStaticSource<T>> {
@@ -50,17 +50,40 @@ impl<T, S: BStaticSource<T>> BKnownStartSource for BIntoDynamic<T, S> {
     }
 }
 
-impl<T, S: BStaticSource<T>> BDynamicSource<T> for BIntoDynamic<T, S> {
-    fn b_position(&self) -> Self::Offset { self.index }
+impl<T, S: BStaticSource<T> + BKnownEndSource> BKnownEndSource for BIntoDynamic<T, S> {
+    fn b_end_offset(&self) -> Self::Offset { self.inner.b_end_offset() }
+}
 
-    fn b_seek(&mut self, offset: Self::Offset) -> Result<(), Self::Error> {
-        self.index = offset;
-        Ok(())
+impl<
+    T,
+    E: From<BSliceError>,
+    S: BStaticSource<T, Error = E> + BSliceableSource<Slice, E>,
+    Slice
+> BSliceableSource<Slice, E> for BIntoDynamic<T, S>  {
+    fn b_full_slice(&self) -> Result<Slice, Self::Error> { self.inner.b_full_slice() }
+
+    fn b_slice(&self, range: Range<Self::Offset>) -> Result<Slice, Self::Error> {
+        self.inner.b_slice(range)
     }
+}
+
+
+impl<T, S: BStaticSource<T>> BDynamicSourceBase for BIntoDynamic<T, S> {
+    fn b_position(&self) -> Self::Offset { self.index }
+}
+
+impl<T, S: BStaticSource<T>> BSeekableSource for BIntoDynamic<T, S> {
+    fn b_jump_to(&mut self, offset: Self::Offset) -> Result<(), Self::Error> {
+        Ok(self.index = offset)
+    }
+}
+
+
+impl<T, S: BStaticSource<T>> BDynamicSource<T> for BIntoDynamic<T, S> {
 
     fn b_next(&mut self) -> Result<Option<Self::Token>, Self::Error> {
         let (next_position, next_token) = self.inner.b_next_at(self.index)?;
-        self.b_seek(next_position)?;
+        self.b_jump_to(next_position)?;
         return Ok(next_token)
     }
 }

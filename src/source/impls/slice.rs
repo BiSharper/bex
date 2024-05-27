@@ -1,7 +1,7 @@
 use std::ops::{Deref, DerefMut, Range};
 use crate::BErrorScoped;
 use crate::source::base::{BKnownEndSource, BKnownStartSource, BOwnedStrSource, BSliceableSource, BSourceBase, BSourceMeta, BStrSource};
-use crate::source::{BSimpleError, BSliceError, BStaticSource, BStringError};
+use crate::source::{BSimpleError, BSliceError, BStaticSource, BStaticSourceBase, BStringError};
 
 type Slice<'a, T> = &'a [T];
 
@@ -72,6 +72,10 @@ impl<'a, T> BSliceableSource<&'a [T], BSliceError> for Slice<'a, T> {
     }
 }
 
+impl<'a, T> BStaticSourceBase for Slice<'a, T> {
+
+}
+
 impl<'a, T> BStaticSource<T> for Slice<'a, T> {
     fn b_next_at(&mut self, offset: Self::Offset) -> Result<(Self::Offset, Option<Self::Token>), Self::Error> {
         if let Some(tok) = self.get(offset) {
@@ -106,6 +110,8 @@ impl<'a> BKnownStartSource for BByteSlice<'a> {
 impl<'a> BSourceBase<u8> for BByteSlice<'a> {
     type Token = &'a u8;
 }
+
+impl<'a> BStaticSourceBase for BByteSlice<'a> {}
 
 impl<'a> BStaticSource<u8> for BByteSlice<'a> {
     fn b_next_at(&mut self, offset: Self::Offset) -> Result<(Self::Offset, Option<Self::Token>), Self::Error> {

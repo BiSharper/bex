@@ -1,7 +1,7 @@
 use std::ops::Range;
 use crate::BErrorScoped;
 use crate::source::base::{BKnownEndSource, BKnownStartSource, BOwnedStrSource, BSliceableSource, BSourceBase, BSourceMeta, BStrSource};
-use crate::source::{BSimpleError, BStaticSource};
+use crate::source::{BSimpleError, BStaticSource, BStaticSourceBase};
 
 impl<'a> BErrorScoped for &'a str {
     type Error = BSimpleError;
@@ -18,7 +18,9 @@ impl<'a> BSourceBase<char> for &'a str {
 impl<'a> BSourceBase<u8> for &'a str {
     type Token = u8;
 }
+impl<'a> BStaticSourceBase for &'a str {
 
+}
 impl<'a> BKnownStartSource for &'a str {
     fn b_start(&self) -> Self::Offset { 0 }
 }
